@@ -13,6 +13,7 @@ module;
 #include <algorithm>
 #include <cctype>
 #include <sstream>
+#include <vector>
 
 // Module実装であることを宣言
 module string_utils;

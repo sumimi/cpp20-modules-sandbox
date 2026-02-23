@@ -3,10 +3,10 @@
 # @brief C++20 Modules サンプルのビルド構成を定義するファイル
 #
 # このファイルは、C++20 Modulesを使用したサンプルコードをビルドします。
-# GCC 11+ の -fmodules-ts フラグを使用して Module をコンパイルします。
+# GCC 14 の -fmodules-ts フラグを使用して Module をコンパイルします。
 #
-# 注意: CMake 3.20とGCC 11の組み合わせでは、Moduleの依存関係管理に
-#       制限があるため、手動でファイル順序を管理します。
+# 注意: -fmodules-ts 使用時は Module の依存関係順序を保つため、
+#       並列ビルド（-j）は使用せず -j1 でビルドしてください。
 #
 
 # C++20とModulesのサポートを有効化
@@ -17,7 +17,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # GCC Modules用のコンパイルフラグ
 set(MODULE_COMPILE_FLAGS "-fmodules-ts")
 
-# 正しい順序でファイルを列挙（依存関係順）
+# ファイルを依存関係順で列挙
+# GCC 14 でも -fmodules-ts 使用時は import するモジュールの .gcm ファイルが
+# コンパイル時に存在していなければならない。CMake が依存関係を自動解決しないため、
+# ここで手動でコンパイル順序を保証する必要がある。
+# （CMake 3.28+ のネイティブModuleサポートへ移行すれば自動解決可能だが、現在は未対応）
 set(ALL_SOURCES
     # Module Interfaces (依存順)
     01_hello/hello.cppm
@@ -39,8 +43,9 @@ set(ALL_SOURCES
 add_library(sampleapp ${ALL_SOURCES})
 
 # C++20 とModules のコンパイルフラグを設定
+# PRIVATE: テスト側は自身の CMakeLists.txt で明示的に追加するため伝播させない
 target_compile_features(sampleapp PUBLIC cxx_std_20)
-target_compile_options(sampleapp PUBLIC ${MODULE_COMPILE_FLAGS})
+target_compile_options(sampleapp PRIVATE ${MODULE_COMPILE_FLAGS})
 
 # インクルードディレクトリを指定
 target_include_directories(sampleapp PUBLIC
@@ -63,6 +68,4 @@ set_source_files_properties(
 # カバレッジ取得のためのビルド拡張（GCC環境かつ ENABLE_COVERAGE オン時）
 include(${CMAKE_SOURCE_DIR}/tools/coverage.cmake)
 enable_coverage_if_gcc(sampleapp)
-
-
 

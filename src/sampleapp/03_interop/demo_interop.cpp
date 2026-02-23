@@ -5,13 +5,13 @@
  * ModuleとヘッダファイルのInteroperability（相互運用性）を示します。
  */
 
-// Moduleをインポート
-import modern;
-
 // 従来のヘッダファイルも直接includeできる
 #include <iostream>
 
 #include "legacy.h"
+
+// Moduleをインポート
+import modern;
 
 /**
  * @brief デモ実行関数

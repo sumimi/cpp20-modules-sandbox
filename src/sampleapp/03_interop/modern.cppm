@@ -6,11 +6,12 @@
  * Global Module Fragmentを使用します。
  */
 
-// Global Module Fragment: Module宣言の前に#includeを配置
-// この領域でincludeされたヘッダは、Moduleの外側として扱われる
+// Global Module Fragment: module; から export module xxx; までの領域
 module;
 
-// 従来のヘッダファイルをインクルード
+// GMF内でincludeされたヘッダの宣言は「グローバルモジュール」に帰属する。
+// 名前付きModule（modern）には属さないが、Module実装内から利用可能。
+// ※「Moduleの外側として扱われる」は不正確。翻訳単位の一部であり、exportされないだけ。
 #include <string>
 
 #include "legacy.h"

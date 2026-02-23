@@ -5,10 +5,10 @@
  * hello Moduleをimportして使用する例を示します。
  */
 
+#include <iostream>
+
 // Moduleをインポート（#includeの代わり）
 import hello;
-
-#include <iostream>
 
 /**
  * @brief デモ実行関数

@@ -5,9 +5,9 @@
  * 実践的なライブラリ設計の例を示します。
  */
 
-import string_utils;
-
 #include <iostream>
+
+import string_utils;
 
 /**
  * @brief デモ実行関数

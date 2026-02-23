@@ -5,11 +5,11 @@
  * Module Partitionsの使用例を示します。
  */
 
-// math Moduleをインポート（Partitionは自動的に含まれる）
-import math;
-
 #include <iomanip>
 #include <iostream>
+
+// math Moduleをインポート（Partitionは自動的に含まれる）
+import math;
 
 /**
  * @brief デモ実行関数

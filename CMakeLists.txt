@@ -19,10 +19,10 @@
 #
 # カスタムターゲット（以下のコマンドで実行）:
 #   cmake -S . -B build                                # 初期構成
-#   cmake --build build                                # ビルド
-#   cmake --build build --target run_tests             # ユニットテストの実行
+#   cmake --build build -j1                            # ビルド（Module依存関係のため並列不可）
+#   cmake --build build -j1 --target run_tests         # ユニットテストの実行
 #   cmake --build build --target test_report           # テスト結果HTMLレポート生成
-#   cmake --build build --target coverage              # カバレッジ測定とHTML出力 (SETUP_GUIDE.mdを参照)
+#   cmake --build build --target coverage              # カバレッジ測定とHTML出力
 #   cmake --build build --target doc                   # ドキュメント生成
 #   cmake --build build --target clang_tidy            # 静的解析の実行
 #   cmake --build build --target valgrind              # メモリリーク検出
@@ -38,9 +38,9 @@
 #   └── build/          - ビルド出力先（外部生成）
 #
 # 必須ツール（事前にインストールが必要）:
-#   - CMake 3.15 以上（推奨: 3.28以上）
-#   - GCC 11以上（C++20 Modules対応、推奨: GCC 14以上）
-#   - Google Test および Google Mock (導入方法について README.md を参照)
+#   - GCC 14以上（GCC 11〜13はModule内外の標準ライブラリヘッダ競合により動作不安定）
+#   - CMake 3.28以上（それ以前はModules依存関係を自動解決できず手動管理が必要）
+#   - Google Test および Google Mock
 #   - Doxygen（ドキュメント生成用）
 #   - lcov, genhtml（カバレッジ解析用）
 #   - xsltproc（HTMLレポート変換用）
@@ -48,7 +48,7 @@
 #   - valgrind（メモリリーク解析用）
 # =============================================================================
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.28)
 project(cpp20-modules-sandbox VERSION 1.0.0 LANGUAGES CXX)
 
 # ----------------------------------------------------------------------------- 
@@ -69,9 +69,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # -----------------------------------------------------------------------------
 # clang-tidy静的解析設定
-# （C++20 Modulesはclang-tidyに未対応のため、現時点では無効化）
+#
+# clang-tidy 自体は C++20 に対応しているが、このプロジェクトでは GCC 固有の
+# -fmodules-ts フラグを使用しているため、CMAKE_CXX_CLANG_TIDY（全ターゲットへの
+# 自動適用）は無効のままにする。
+# clang_tidy カスタムターゲット経由での手動実行は利用可能。
 # -----------------------------------------------------------------------------
-# find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+# CMAKE_CXX_CLANG_TIDY は意図的に無効化（-fmodules-ts との非互換のため）
 # if(CLANG_TIDY_EXE)
 #     set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
 # endif()
