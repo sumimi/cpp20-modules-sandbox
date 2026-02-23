@@ -19,7 +19,7 @@ category_en:
   - C++
   - Language Features
 
-difficulty: intermediate
+difficulty: 2
 
 tags:
   - cpp20
@@ -113,7 +113,7 @@ C++20のModulesは、これらの問題を以下の方法で解決します：
 
 ### コンパイラサポート
 
-- **GCC**: GCC 11以降で実験的サポート（完全サポートはGCC 14以降）
+- **GCC**： GCC 11以降で実験的サポート（完全サポートはGCC 14以降）
 
 ### ビルドシステムの対応状況
 
@@ -161,6 +161,8 @@ C++20のModulesは、これらの問題を以下の方法で解決します：
 - CMakeでのModulesサポート
 - 依存関係の管理
 
+各サンプルのコード解説・学習ポイント・トラブルシューティングは **[SAMPLES.md](SAMPLES.md)** に詳しくまとめています。
+
 ---
 
 ## 🛠️ 開発環境
@@ -171,20 +173,22 @@ C++20のModulesは、これらの問題を以下の方法で解決します：
 
 | 項目 | バージョン |
 |------|-----------|
-| **OS** | Rocky Linux 9.3 (Blue Onyx) |
-| **GCC** | 11.4.1 20231218 (Red Hat 11.4.1-3) |
-| **G++** | 11.4.1 20231218 (Red Hat 11.4.1-3) |
-| **CMake** | 3.20.2 |
-| **Make** | GNU Make 4.3 |
+| **OS** | Rocky Linux 10.1 (Red Quartz) |
+| **GCC** | 14.3.1 20250617 (Red Hat 14.3.1-2) |
+| **G++** | 14.3.1 20250617 (Red Hat 14.3.1-2) |
+| **CMake** | 3.30.5 |
+| **Make** | GNU Make 4.4.1 |
 
-> **Note**: CMakeは推奨バージョン（3.28以降）より古いですが、基本的なModules機能は動作します。
+> **Note**： Rocky Linux 9.3 (Blue Onyx)（GCC 11.4.1 / CMake 3.20.2）では、CMake の Modules 依存関係管理の制限と標準ライブラリヘッダとの競合が原因でビルドが困難でした。Rocky Linux 10.1 (Red Quartz) への移行により、これらの問題が解消されています。
 
 ### 必須要件
 
-- **C++20対応コンパイラ**:
-  - GCC 11以降（推奨: GCC 14以降）
-- **CMake**: 3.20以降（推奨: 3.28以降）
-- **ビルドツール**: Make または Ninja
+- **C++20対応コンパイラ**：
+  - GCC **14以降**（GCC 11〜13はModule内外の標準ライブラリヘッダ競合により動作不安定）
+- **CMake**： **3.28以降**（それ以前は Modules の依存関係を自動解決できず手動管理が必要）
+- **ビルドツール**： Make または Ninja
+
+> **Warning**： `-fmodules-ts` フラグを使用する場合、`import` 文は必ず同一ファイル内の `#include` より**後**に記述してください。逆順にすると標準ライブラリとの競合エラーが発生します。また、Module の依存関係順序を保つため、並列ビルド（`-j` オプション）は使用せず **`-j1`** でビルドしてください。
 
 ### ビルド方法
 
@@ -192,17 +196,17 @@ C++20のModulesは、これらの問題を以下の方法で解決します：
 # 設定（Makeを使用）
 cmake -S . -B build
 
-# ビルド
-cmake --build build
+# ビルド（Module依存関係のため -j1 で順次ビルド）
+cmake --build build -j1
 
 # 実行
-./build/bin/cpp20_modules_sandbox
+./build/bin/main
 
 # テスト実行
 cmake --build build --target run_tests
 ```
 
-> **Note**: Ninjaがインストールされている場合は、`cmake -S . -B build -G Ninja` でより高速にビルドできます。
+> **Note**： `-fmodules-ts` を使用したModulesビルドでは並列ビルドによる `gcm.cache` の競合が発生するため、`-j1` を指定してください。
 
 ---
 
@@ -210,19 +214,23 @@ cmake --build build --target run_tests
 
 ```
 cpp20-modules-sandbox/
-├── include/           # 従来のヘッダファイル（移行期）
-│   └── sampleapp/
-├── src/               # ソースコードとModuleファイル
-│   ├── main.cpp
-│   └── sampleapp/
-│       └── *.cppm    # C++20 Moduleファイル
-├── test/              # ユニットテスト
+├── src/               # アプリケーションソースコード
+│   ├── main.cpp       # エントリーポイント（サンプル選択・実行）
+│   └── sampleapp/     # サンプル実装（01_hello 〜 04_library）
+├── test/              # テストコード
 │   └── unit/
-├── docs/              # Doxygenドキュメント設定
-├── tools/             # ビルド・解析スクリプト
-├── CMakeLists.txt     # CMake設定ファイル
-└── README.md
+│       └── sampleapp/ # 各サンプルに対応するユニットテスト（Google Test）
+├── include/           # 従来のヘッダファイル（移行期、現在は空）
+├── docs/              # Doxygen設定・カスタムスタイル
+├── tools/             # ビルド・解析・カバレッジスクリプト
+├── .github/           # GitHub設定・Copilot指示
+├── .vscode/           # VS Code設定（IntelliSense等）
+├── CMakeLists.txt     # ルートCMake設定
+├── SAMPLES.md         # サンプル詳細ガイド（ファイル構成・コード解説）
+└── CHANGELOG.md
 ```
+
+ファイルレベルの詳細な構成・テスト対応表は [SAMPLES.md](SAMPLES.md) を参照してください。
 
 ---
 
@@ -237,15 +245,18 @@ cpp20-modules-sandbox/
 
 - [GCC C++20 Modules](https://gcc.gnu.org/wiki/cxx-modules)
 
+### 日本語ドキュメント
+
+- [cpprefjp - C++日本語リファレンス - モジュール](https://cpprefjp.github.io/lang/cpp20/modules.html)
 ---
 
 ## 📝 学習の進め方
 
-1. **まずは動かしてみる**: サンプルコードをビルド・実行
-2. **コードを読む**: Moduleの構文と仕組みを理解
-3. **自分で書いてみる**: 既存のヘッダファイルをModule化
-4. **問題に直面する**: エラーメッセージと戦い、理解を深める
-5. **ベストプラクティスを探る**: 実用的な設計パターンを考える
+1. **まずは動かしてみる**： サンプルコードをビルド・実行
+2. **コードを読む**： Moduleの構文と仕組みを理解
+3. **自分で書いてみる**： 既存のヘッダファイルをModule化
+4. **問題に直面する**： エラーメッセージと戦い、理解を深める
+5. **ベストプラクティスを探る**： 実用的な設計パターンを考える
 
 ---
 
