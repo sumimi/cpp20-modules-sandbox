@@ -12,8 +12,24 @@ file(GLOB SAMPLEAPP_TEST_SOURCES CONFIGURE_DEPENDS *.cpp)
 # テスト用実行バイナリを作成
 add_executable(sampleapp_tests ${SAMPLEAPP_TEST_SOURCES})
 
-# C++17 を有効化（PRIVATE: このターゲット内でのみ有効）
-target_compile_features(sampleapp_tests PRIVATE cxx_std_17)
+# C++20 を有効化（C++20 Modules の import に必要）
+target_compile_features(sampleapp_tests PRIVATE cxx_std_20)
+
+# -fmodules-ts: Module の import 構文を有効化
+target_compile_options(sampleapp_tests PRIVATE -fmodules-ts)
+
+# GCC は CWD 配下の gcm.cache/ で .gcm ファイルを探索する。
+# sampleapp_tests の CWD は build/test/unit/sampleapp/ なので、
+# build/test/unit/sampleapp/gcm.cache -> build/src/sampleapp/gcm.cache のシンボリックリンクを作成する
+add_custom_target(create_gcm_symlink_for_sampleapp_tests
+    COMMAND ln -sfn
+        ${CMAKE_BINARY_DIR}/src/sampleapp/gcm.cache
+        ${CMAKE_CURRENT_BINARY_DIR}/gcm.cache
+    DEPENDS sampleapp
+    COMMENT "Linking gcm.cache for sampleapp module imports"
+    VERBATIM
+)
+add_dependencies(sampleapp_tests create_gcm_symlink_for_sampleapp_tests)
 
 # インクルードパスの設定（本体ヘッダ + テスト用モック）
 target_include_directories(sampleapp_tests PRIVATE
